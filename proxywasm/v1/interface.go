@@ -140,4 +140,8 @@ type ImportsHandler interface {
 	// custom extension
 	GetCustomBuffer(bufferType BufferType) common.IoBuffer
 	GetCustomHeader(mapType MapType) common.HeaderMap
+
+	//Runtime
+	GetState(storeName string, key string) (string, WasmResult)
+	InvokeService(id string, method string, param string) (string, WasmResult)
 }
