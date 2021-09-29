@@ -166,6 +166,14 @@ func (d *DefaultImportsHandler) RemoveMetric(metricID int32) WasmResult {
 	return WasmResultUnimplemented
 }
 
+func (d *DefaultImportsHandler) GetState(storeName string, key string) (string, WasmResult) {
+	return "", WasmResultOk
+}
+
+func (d *DefaultImportsHandler) InvokeService(id string, method string, param string) (string, WasmResult) {
+	return "", WasmResultOk
+}
+
 // shared data
 
 type sharedDataItem struct {
