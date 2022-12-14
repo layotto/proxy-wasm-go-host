@@ -15,18 +15,54 @@
  * limitations under the License.
  */
 
-package v1
+package wazero
 
-import "mosn.io/proxy-wasm-go-host/proxywasm/common"
+import (
+	"context"
 
-func ProxyResumeDownstream(instance common.WasmInstance) int32 {
-	ctx := getImportHandler(instance)
+	wazero "github.com/tetratelabs/wazero"
 
-	return ctx.ResumeDownstream().Int32()
+	"mosn.io/proxy-wasm-go-host/proxywasm/common"
+)
+
+type VM struct {
+	runtime wazero.Runtime
 }
 
-func ProxyResumeUpstream(instance common.WasmInstance) int32 {
-	ctx := getImportHandler(instance)
+func NewVM() common.WasmVM {
+	vm := &VM{}
+	vm.Init()
 
-	return ctx.ResumeUpstream().Int32()
+	return vm
+}
+
+func (w *VM) Name() string {
+	return "wazero"
+}
+
+var ctx = context.Background()
+
+func (w *VM) Init() {
+	w.runtime = wazero.NewRuntime(ctx)
+}
+
+func (w *VM) NewModule(wasmBytes []byte) common.WasmModule {
+	if len(wasmBytes) == 0 {
+		panic("wasm was empty")
+	}
+
+	m, err := w.runtime.CompileModule(ctx, wasmBytes)
+	if err != nil {
+		panic(err)
+	}
+
+	return NewModule(w, m, wasmBytes)
+}
+
+// Close implements io.Closer
+func (w *VM) Close() (err error) {
+	if r := w.runtime; r != nil {
+		err = r.Close(ctx)
+	}
+	return
 }

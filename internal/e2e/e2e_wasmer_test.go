@@ -1,3 +1,6 @@
+//go:build wasmer
+// +build wasmer
+
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -15,26 +18,39 @@
  * limitations under the License.
  */
 
-package wasmer
+package e2e
 
 import (
-	"io/ioutil"
-	"path/filepath"
+	_ "embed"
+	"testing"
 
-	"mosn.io/proxy-wasm-go-host/proxywasm/common"
+	"mosn.io/proxy-wasm-go-host/wasmer"
 )
 
-func NewWasmerInstanceFromFile(path string) common.WasmInstance {
-	bytes, err := ioutil.ReadFile(filepath.Clean(path))
-	if err != nil {
-		return nil
-	}
+func TestStartABIContextV1_wasmer(t *testing.T) {
+	vm := wasmer.NewWasmerVM()
+	defer vm.Close()
 
-	vm := NewWasmerVM()
+	testStartABIContextV1(t, vm)
+}
 
-	module := vm.NewModule(bytes)
+func TestStartABIContextV2_wasmer(t *testing.T) {
+	vm := wasmer.NewWasmerVM()
+	defer vm.Close()
 
-	instance := module.NewInstance()
+	testStartABIContextV2(t, vm)
+}
 
-	return instance
+func TestAddRequestHeaderV1_wasmer(t *testing.T) {
+	vm := wasmer.NewWasmerVM()
+	defer vm.Close()
+
+	testV1(t, vm, testAddRequestHeaderV1)
+}
+
+func TestAddRequestHeaderV2_wasmer(t *testing.T) {
+	vm := wasmer.NewWasmerVM()
+	defer vm.Close()
+
+	testV2(t, vm, testAddRequestHeaderV2)
 }
