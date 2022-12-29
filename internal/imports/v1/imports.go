@@ -85,8 +85,8 @@ func HostFunctions(instance common.WasmInstance) map[string]interface{} {
 
 	hostFuncs["proxy_call_foreign_function"] = h.ProxyCallForeignFunction
 
-	hostFuncs["proxy_get_state"] = h.ProxyCallForeignFunction
-	hostFuncs["proxy_invoke_service"] = h.ProxyCallForeignFunction
+	hostFuncs["proxy_get_state"] = h.ProxyGetState
+	hostFuncs["proxy_invoke_service"] = h.ProxyInvokeService
 
 	return hostFuncs
 }
@@ -166,7 +166,8 @@ func (h *host) ProxyCallForeignFunction(ctx context.Context, funcNamePtr int32, 
 	return copyBytesIntoInstance(instance, ret, returnData, returnSize).Int32()
 }
 
-func ProxyGetState(instance common.WasmInstance, storeNamePtr int32, storeNameSize int32, keyPtr int32, keySize int32, valuePtr int32, valueSize int32) int32 {
+func (h *host) ProxyGetState(ctx context.Context, storeNamePtr int32, storeNameSize int32, keyPtr int32, keySize int32, valuePtr int32, valueSize int32) int32 {
+	instance := h.Instance
 	storeName, err := instance.GetMemory(uint64(storeNamePtr), uint64(storeNameSize))
 	if err != nil {
 		return v1.WasmResultInvalidMemoryAccess.Int32()
@@ -177,9 +178,9 @@ func ProxyGetState(instance common.WasmInstance, storeNamePtr int32, storeNameSi
 		return v1.WasmResultInvalidMemoryAccess.Int32()
 	}
 
-	ctx := getImportHandler(instance)
+	ih := getImportHandler(instance)
 
-	ret, res := ctx.GetState(string(storeName), string(key))
+	ret, res := ih.GetState(string(storeName), string(key))
 	if res != v1.WasmResultOk {
 		return res.Int32()
 	}
@@ -187,7 +188,8 @@ func ProxyGetState(instance common.WasmInstance, storeNamePtr int32, storeNameSi
 	return copyIntoInstance(instance, ret, valuePtr, valueSize).Int32()
 }
 
-func ProxyInvokeService(instance common.WasmInstance, idPtr int32, idSize int32, methodPtr int32, methodSize int32, paramPtr int32, paramSize int32, resultPtr int32, resultSize int32) int32 {
+func (h *host) ProxyInvokeService(ctx context.Context, idPtr int32, idSize int32, methodPtr int32, methodSize int32, paramPtr int32, paramSize int32, resultPtr int32, resultSize int32) int32 {
+	instance := h.Instance
 	id, err := instance.GetMemory(uint64(idPtr), uint64(idSize))
 	if err != nil {
 		return v1.WasmResultInvalidMemoryAccess.Int32()
@@ -203,9 +205,9 @@ func ProxyInvokeService(instance common.WasmInstance, idPtr int32, idSize int32,
 		return v1.WasmResultInvalidMemoryAccess.Int32()
 	}
 
-	ctx := getImportHandler(instance)
+	ih := getImportHandler(instance)
 
-	ret, res := ctx.InvokeService(string(id), string(method), string(param))
+	ret, res := ih.InvokeService(string(id), string(method), string(param))
 	if res != v1.WasmResultOk {
 		return res.Int32()
 	}
